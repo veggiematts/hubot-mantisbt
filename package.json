@@ -1,0 +1,23 @@
+{
+  "name": "hubot-mantisbt",
+  "description": "MantisBT integration for Hubot",
+  "version": "0.1.0",
+  "author": "Tomáš Duda <tomas.duda1@gmail.com>",
+  "license": "MIT",
+  "keywords": "hubot, hubot-scripts, mantis, mantisbt",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TomasDuda/hubot-mantisbt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TomasDuda/hubot-mantisbt/issues"
+  },
+  "dependencies": {
+    "moment": "^2.14.1",
+    "soap": "^0.16.0"
+  },
+  "peerDependencies": {
+    "hubot": "2.x"
+  },
+  "main": "index.coffee"
+}
