@@ -14,6 +14,9 @@
 #   hubot mantis set username <username> - set username you have in Mantis (for the `my issues` command)
 #   hubot mantis projects - list all projects
 #
+# Other functionality:
+#   Automatic issue preview when pasting a link to the bug tracker or a message in format #123
+#
 # License: MIT
 
 soap = require "soap"
@@ -73,6 +76,11 @@ soap.createClient(
 )
 
 allIssueTypes = ["assigned", "monitored", "reported"]
+
+# regex escaping
+
+escapeRegExp = (s) ->
+  s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
 
 # Helper for getting project IDs by name
 
@@ -236,4 +244,94 @@ module.exports = (robot) ->
       text += "\n#{project.name} - #{project.view_state} - #{project.url}"
 
     msg.reply text
+
+  # Rich formatting for Mantis links
+
+  robot.hear new RegExp("[#|#{escapeRegExp(process.env.HUBOT_MANTIS_BASE_URL + "view.php?id=")}](\\d+)", "mi"), (msg) ->
+    issueId = msg.match[1]
+
+    priorityToColor =
+      none: null
+      low: "#7eb7e0"
+      normal: "#31a4f7"
+      high: "warning"
+      urgent: "danger"
+      immediate: "danger"
+
+    options =
+      username: username
+      password: password
+      issue_id: issueId
+
+    client.mc_issue_get(
+      options
+      (err, result) ->
+        if err
+          return # silently fail
+
+        issue =
+          id: msg.match[1]
+          summary: result.return.summary.$value
+          description: result.return.description.$value
+          project:
+            id: result.return.project.id.$value
+            name: result.return.project.name.$value
+          category: result.return.category.$value
+          priority: result.return.priority.name.$value
+          severity: result.return.severity.name.$value
+          status: result.return.status.name.$value
+          reporter: result.return.reporter.name.$value
+          handler: result.return.handler?.name.$value ? ""
+          date_submitted:  moment(result.return.date_submitted.$value).format(date_format)
+          last_updated: moment(result.return.last_updated.$value).format(date_format)
+
+        attachment =
+          fallback: "Issue: #{issue.summary} (project #{issue.projectName}, category #{issue.category}, " +
+                    "priority #{issue.priority}, severity #{issue.severity}, " +
+                    "last updated #{issue.last_updated})"
+          title: issue.summary
+          title_link: "#{process.env.HUBOT_MANTIS_BASE_URL}view.php?id=#{issueId}"
+          text: issue.description
+          author_name: issue.reporter
+          color: priorityToColor[issue.priority] ? null
+          fields: [
+            {}=
+              title: "Priority"
+              value: issue.priority
+              short: true
+            {}=
+              title: "Severity"
+              value: issue.severity
+              short: true
+            {}=
+              title: "Status"
+              value: issue.status
+              short: true
+            {}=
+              title: "Assigned to"
+              value: issue.handler
+              short: true
+            {}=
+              title: "Project"
+              value: "<#{process.env.HUBOT_MANTIS_BASE_URL}set_project.php?project_id=#{issue.project.id}|#{issue.project.name}>"
+              short: true
+            {}=
+              title: "Category"
+              value: issue.category
+              short: true
+            {}=
+              title: "Date submitted"
+              value: issue.date_submitted
+              short: true
+            {}=
+              title: "Last update"
+              value: issue.last_updated
+              short: true
+          ]
+
+        robot.adapter.customMessage
+          channel: msg.envelope.room
+          username: msg.robot.name
+          attachments: [attachment]
+    )
 

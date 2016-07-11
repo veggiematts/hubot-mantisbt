@@ -33,6 +33,10 @@ Then add **hubot-mantisbt** to your `external-scripts.json`:
 * `hubot mantis set username <username>` - set username you have in Mantis (for the `my issues` command)
 * `hubot mantis projects` - list all projects
 
+## Other functionality
+
+* Automatic issue preview when pasting a link to the bug tracker or a message in format #123
+
 ## NPM Module
 
 https://www.npmjs.com/package/hubot-mantisbt
