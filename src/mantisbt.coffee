@@ -247,6 +247,7 @@ module.exports = (robot) ->
 
   # Rich formatting for Mantis links
   robot.hear new RegExp("(?:^| )\\#(\\d+)(?:$| )|#{escapeRegExp(process.env.HUBOT_MANTIS_BASE_URL + "view.php?id=")}(\\d+)", "mi"), (msg) ->
+    msg.match = msg.match.filter Boolean # remove null values
     issueId = msg.match[1]
 
     priorityToColor =
