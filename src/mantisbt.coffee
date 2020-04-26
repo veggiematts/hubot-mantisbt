@@ -15,7 +15,7 @@
 #   hubot mantis projects - list all projects
 #
 # Other functionality:
-#   Automatic issue preview when pasting a link to the bug tracker or a message in format #123
+#   Automatic issue preview when pasting a link to the bug tracker or a message in format MT123 or MT 123
 #
 # License: MIT
 
@@ -246,7 +246,7 @@ module.exports = (robot) ->
     msg.reply text
 
   # Rich formatting for Mantis links
-  robot.hear new RegExp("(?:^| )\\#(\\d+)(?:$| )|#{escapeRegExp(process.env.HUBOT_MANTIS_BASE_URL + "view.php?id=")}(\\d+)", "mi"), (msg) ->
+  robot.hear new RegExp("(?:^| )\\MT\\s?(\\d+)(?:$| )|#{escapeRegExp(process.env.HUBOT_MANTIS_BASE_URL + "view.php?id=")}(\\d+)", "mi"), (msg) ->
     msg.match = msg.match.filter Boolean # remove null values
     issueId = msg.match[1]
 
@@ -272,18 +272,18 @@ module.exports = (robot) ->
         issue =
           id: msg.match[1]
           summary: result.return.summary.$value
-          description: result.return.description.$value
+          #description: result.return.description.$value
           project:
             id: result.return.project.id.$value
             name: result.return.project.name.$value
-          category: result.return.category.$value
-          priority: result.return.priority.name.$value
-          severity: result.return.severity.name.$value
+          #category: result.return.category.$value
+          #priority: result.return.priority.name.$value
+          #severity: result.return.severity.name.$value
           status: result.return.status.name.$value
-          reporter: result.return.reporter.name.$value
-          handler: result.return.handler?.name.$value ? ""
-          date_submitted:  moment(result.return.date_submitted.$value).format(date_format)
-          last_updated: moment(result.return.last_updated.$value).format(date_format)
+          #reporter: result.return.reporter.name.$value
+          #handler: result.return.handler?.name.$value ? ""
+          #date_submitted:  moment(result.return.date_submitted.$value).format(date_format)
+          #last_updated: moment(result.return.last_updated.$value).format(date_format)
 
         attachment =
           fallback: "Issue: #{issue.summary} (project #{issue.projectName}, category #{issue.category}, " +
@@ -328,10 +328,12 @@ module.exports = (robot) ->
               value: issue.last_updated
               short: true
           ]
-
-        robot.adapter.customMessage
-          channel: msg.envelope.room
-          username: msg.robot.name
-          attachments: [attachment]
+        msg.send "MT#{issueId} - #{issue.project.name} - #{issue.status} - #{issue.summary}"
+        if (!msg.match[0].startsWith('http'))
+            msg.send attachment.title_link
+        #robot.adapter.customMessage
+        #  channel: msg.envelope.room
+        #  username: msg.robot.name
+        #  attachments: [attachment]
     )
 
